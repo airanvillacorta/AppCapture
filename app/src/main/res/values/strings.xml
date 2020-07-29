@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">AppCapture</string>
+    <string name="tCaptureDefault">Capture Info.</string>
+    <string name="calibrate">Calibrate</string>
+    <string name="capture">Capture</string>
+    <string name="discard">Discard</string>
+    <string name="tInfoDefault">Gen. Info</string>
+    <string name="detect">Detect!</string>
+    <string name="id">ID.</string>
+    <string name="rvecs">RVECS.</string>
+    <string name="tvecs">TVECS.</string>
+</resources>
