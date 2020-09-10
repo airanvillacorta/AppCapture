@@ -199,7 +199,7 @@ Java_com_example_appcapture_MainActivity_stringFromId(
         jobject /* this */) {
     char buf[2048]; // need a buffer for that
     int i = aState->Id;
-    sprintf(buf,"%d",i);
+    sprintf(buf,"%d;",i);
     const char* p = buf;
     return env->NewStringUTF(p);
 }
@@ -213,7 +213,7 @@ Java_com_example_appcapture_MainActivity_stringFromRvecs(
     double a = aState->tRvecs[0].val[0];
     double b = aState->tRvecs[0].val[1];
     double c = aState->tRvecs[0].val[2];
-    sprintf(buf1,"%lf ; %lf ; %lf",a,b,c);
+    sprintf(buf1,"%lf;%lf;%lf;",a,b,c);
 
     //for(int i=0;i<(aState->tRvecs).size();i++){
 
@@ -230,7 +230,7 @@ Java_com_example_appcapture_MainActivity_stringFromTvecs(
     double a = aState->tTvecs[0].val[0];
     double b = aState->tTvecs[0].val[1];
     double c = aState->tTvecs[0].val[2];
-    sprintf(buf2,"%lf ; %lf ; %lf",a,b,c);
+    sprintf(buf2,"%lf;%lf;%lf;",a,b,c);
 
     //for(int i=0;i<(aState->tRvecs).size();i++){
 

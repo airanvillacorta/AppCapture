@@ -43,6 +43,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static String pathdetector = Environment.getExternalStorageDirectory().getAbsolutePath()+"/detector_params.yml";
     private  static String pathcamera = Environment.getExternalStorageDirectory().getAbsolutePath()+"/camera.dat";
     private File internalpath;
+    // Variables para Bluetooth.
+    BlueConnect conexion;
+    boolean statusConection;
+
     private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -241,6 +245,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }else{
             Log.w("Fichero", "ERROR: Al taer fichero.");
         }
+
+        conexion = new BlueConnect("B8:27:EB:F7:2E:49", "00001101-0000-1000-8000-00805f9b34fb");
+        statusConection = conexion.conectar();
     }
 
     // Método para traer fichero de otra aplicación.
@@ -378,46 +385,66 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             semaforo=true;
             //Mat a = matGray.t(), b = matRGBa.t();
             //result=detect(a.getNativeObjAddr(),b.getNativeObjAddr());
-            result=detect(matGray.getNativeObjAddr(), matRGBa.getNativeObjAddr());
-            if(result) {
-                // onCameraFrame va en otro thread. Para tocar los elementos de la UI
-                // hay que estar en el mismo thread que la UI
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //final TextView view = (TextView) findViewById(R.id.tInfo);
-                        //view.setText(R.string.detect);
-                        // Airán. Creamos los TextView de la nueva vista.
-                        final TextView viewId = (TextView) findViewById(R.id.tId);
-                        final TextView viewRvecs = (TextView) findViewById(R.id.tRvecs);
-                        final TextView viewTvecs = (TextView) findViewById(R.id.tTvecs);
-                        String a = stringFromId();
-                        viewId.setText("Id:" + a);
-                        String b = stringFromRvecs();
-                        viewRvecs.setText("Rvecs: " + b);
-                        String c = stringFromTvecs();
-                        viewTvecs.setText("Tvecs: " + c);
+            if(detectionState) {
+                long timeCaptura = System.currentTimeMillis();
+                result = detect(matGray.getNativeObjAddr(), matRGBa.getNativeObjAddr());
+                detectionState=false;
+                if (result) {
+                    // onCameraFrame va en otro thread. Para tocar los elementos de la UI
+                    // hay que estar en el mismo thread que la UI
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //final TextView view = (TextView) findViewById(R.id.tInfo);
+                            //view.setText(R.string.detect);
+                            // Airán. Creamos los TextView de la nueva vista.
+                            final TextView viewId = (TextView) findViewById(R.id.tId);
+                            final TextView viewRvecs = (TextView) findViewById(R.id.tRvecs);
+                            final TextView viewTvecs = (TextView) findViewById(R.id.tTvecs);
+                            String a = stringFromId();
+                            viewId.setText("Id:" + a);
+                            String b = stringFromRvecs();
+                            viewRvecs.setText("Rvecs: " + b);
+                            String c = stringFromTvecs();
+                            viewTvecs.setText("Tvecs: " + c);
+                        }
+                    });
+                    // Enviamos por Bluetooth.
+                    if(statusConection){
+                        long timeEnvio = System.currentTimeMillis();
+                        String cadenaResultado = "1;-1;-1;-1;-1;-1;-1;-1;" + stringFromTvecs() + stringFromRvecs() + timeCaptura + ";" + timeEnvio + ";";
+                        if (conexion.writetostream(cadenaResultado)) {
+                            Log.d("Bluetooth", "OK: COMPLETADO");
+                        } else {
+                            Log.d("Bluetooth", "ERROR: NO COMPLETADO");
+                        }
                     }
-                });
+                } else {
+                    // onCameraFrame va en otro thread. Para tocar los elementos de la UI
+                    // hay que estar en el mismo thread que la UI
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //final TextView view = (TextView) findViewById(R.id.tInfo);
+                            //view.setText(R.string.detect);
+                            // Airán. Creamos los TextView de la nueva vista.
+                            final TextView viewId = (TextView) findViewById(R.id.tId);
+                            final TextView viewRvecs = (TextView) findViewById(R.id.tRvecs);
+                            final TextView viewTvecs = (TextView) findViewById(R.id.tTvecs);
+                            viewId.setText("Id: No detect !!");
+                            viewRvecs.setText("Rvecs: No detect !!");
+                            viewTvecs.setText("Tvecs: No detect !!");
+                        }
+                    });
+                }
             }else{
-                // onCameraFrame va en otro thread. Para tocar los elementos de la UI
-                // hay que estar en el mismo thread que la UI
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //final TextView view = (TextView) findViewById(R.id.tInfo);
-                        //view.setText(R.string.detect);
-                        // Airán. Creamos los TextView de la nueva vista.
-                        final TextView viewId = (TextView) findViewById(R.id.tId);
-                        final TextView viewRvecs = (TextView) findViewById(R.id.tRvecs);
-                        final TextView viewTvecs = (TextView) findViewById(R.id.tTvecs);
-                        viewId.setText("Id: No detect !!");
-                        viewRvecs.setText("Rvecs: No detect !!");
-                        viewTvecs.setText("Tvecs: No detect !!");
-                    }
-                });
+                ndetectedFrames+=1;
+                if(ndetectedFrames>=nframesToAcceptDetection) {
+                    ndetectedFrames = 0;
+                    detectionState = true;
+                }
             }
-            capture=false;
+            //capture=false;
             semaforo=false;
             return matRGBa;
         }
